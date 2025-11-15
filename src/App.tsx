@@ -8,6 +8,8 @@ import Triggers from "./components/Triggers";
 import TikTokAutomation from "./pages/TikTokAutomation";
 import LinkBioAutomation from "./pages/LinkBioAutomation";
 import MayaPhoneSetup from "./pages/MayaPhoneSetup";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
           <Route path="/triggers" element={<Triggers />} />
           <Route path="/tiktok" element={<TikTokAutomation />} />
           <Route path="/linkbio" element={<LinkBioAutomation />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
         </Routes>
       </>
     </Suspense>
