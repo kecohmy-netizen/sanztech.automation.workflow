@@ -1,7 +1,18 @@
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+
 export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto bg-black/50 backdrop-blur-sm rounded-2xl shadow-2xl border border-[#d4af37]/30 p-8">
+        <Link 
+          to="/" 
+          className="inline-flex items-center gap-2 text-[#d4af37] hover:text-yellow-400 transition-colors mb-6"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </Link>
+        
         <h1 className="text-4xl font-bold bg-gradient-to-r from-[#d4af37] via-yellow-400 to-[#d4af37] bg-clip-text text-transparent mb-8">
           Terms of Service
         </h1>
@@ -182,9 +193,12 @@ export default function TermsOfService() {
             For questions about these Terms or to report violations, contact us:
           </p>
           <div className="mt-4 p-6 bg-gradient-to-br from-[#d4af37]/10 to-yellow-600/5 rounded-xl border border-[#d4af37]/30">
-            <p className="text-gray-300">
-              <strong className="text-[#d4af37]">Email:</strong> legal@sanztech.online<br />
-              <strong className="text-[#d4af37]">Support:</strong> support@sanztech.online<br />
+            <p className="text-gray-300 space-y-2">
+              <strong className="text-[#d4af37]">Contact Person:</strong> Adam Sanz<br />
+              <strong className="text-[#d4af37]">Email:</strong> <a href="mailto:sanztechsolution@gmail.com" className="hover:text-[#d4af37] transition-colors">sanztechsolution@gmail.com</a><br />
+              <strong className="text-[#d4af37]">Phone:</strong> <a href="tel:+60116396924" className="hover:text-[#d4af37] transition-colors">011-6396 9241</a><br />
+              <strong className="text-[#d4af37]">Website:</strong> <a href="https://www.sanztech.online" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] transition-colors">sanztech.online</a><br />
+              <strong className="text-[#d4af37]">TikTok:</strong> <a href="https://www.tiktok.com/@adamsanzziy" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] transition-colors">@adamsanzziy</a><br />
               <strong className="text-[#d4af37]">Address:</strong> Keramat Wangsa, Kuala Lumpur, Malaysia
             </p>
           </div>

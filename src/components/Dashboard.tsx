@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Bot, 
@@ -397,6 +397,43 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="mt-12 pb-8 border-t border-[#d4af37]/20 pt-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
+            <div>
+              <p>© 2025 Sanztech Automation Solution. All rights reserved.</p>
+            </div>
+            <div className="flex gap-6">
+              <Link 
+                to="/privacy" 
+                className="hover:text-[#d4af37] transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <Link 
+                to="/terms" 
+                className="hover:text-[#d4af37] transition-colors"
+              >
+                Terms of Service
+              </Link>
+              <a 
+                href="mailto:sanztechsolution@gmail.com" 
+                className="hover:text-[#d4af37] transition-colors"
+              >
+                Contact
+              </a>
+              <a 
+                href="https://www.tiktok.com/@adamsanzziy" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#d4af37] transition-colors"
+              >
+                TikTok
+              </a>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );
