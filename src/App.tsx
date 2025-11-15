@@ -13,6 +13,8 @@ import Triggers from "./components/Triggers";
 import TikTokAutomation from "./pages/TikTokAutomation";
 import LinkBioAutomation from "./pages/LinkBioAutomation";
 import MayaPhoneSetup from "./pages/MayaPhoneSetup";
+import TikTokUpload from "./pages/TikTokUpload";
+import TikTokCallback from "./pages/TikTokCallback";
 
 function App() {
   return (
@@ -33,6 +35,8 @@ function App() {
           <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
           <Route path="/triggers" element={<ProtectedRoute><Triggers /></ProtectedRoute>} />
           <Route path="/tiktok" element={<ProtectedRoute><TikTokAutomation /></ProtectedRoute>} />
+          <Route path="/tiktok-upload" element={<ProtectedRoute><TikTokUpload /></ProtectedRoute>} />
+          <Route path="/tiktok/callback" element={<TikTokCallback />} />
           <Route path="/linkbio" element={<ProtectedRoute><LinkBioAutomation /></ProtectedRoute>} />
           
           {/* Catch all - redirect to homepage */}
