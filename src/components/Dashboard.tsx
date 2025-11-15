@@ -402,20 +402,26 @@ export default function Dashboard() {
         <footer className="mt-12 pb-8 border-t border-[#d4af37]/20 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
             <div>
-              <p>© 2025 Sanztech Automation Solution. All rights reserved.</p>
+              <p>© 2025 Adam Sanz | Sanztech Automation Solution</p>
             </div>
             <div className="flex gap-6">
+              <Link 
+                to="/" 
+                className="hover:text-[#d4af37] transition-colors"
+              >
+                Home
+              </Link>
               <Link 
                 to="/privacy" 
                 className="hover:text-[#d4af37] transition-colors"
               >
-                Privacy Policy
+                Privacy
               </Link>
               <Link 
                 to="/terms" 
                 className="hover:text-[#d4af37] transition-colors"
               >
-                Terms of Service
+                Terms
               </Link>
               <a 
                 href="mailto:sanztechsolution@gmail.com" 

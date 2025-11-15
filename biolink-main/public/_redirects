@@ -1,0 +1,4 @@
+# TikTok verification file redirects
+/.well-known/tiktok-developers-site-verification.txt  /.well-known/tiktok-developers-site-verification.txt  200
+/tiktok-developers-site-verification.txt  /.well-known/tiktok-developers-site-verification.txt  200
+

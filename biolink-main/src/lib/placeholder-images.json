@@ -1,0 +1,10 @@
+{
+  "placeholderImages": [
+    {
+      "id": "adamsanz-profile",
+      "description": "A portrait of Adam Sanz, the founder of Adamsanz.",
+      "imageUrl": "/placeholder-user.jpg",
+      "imageHint": "man portrait"
+    }
+  ]
+}

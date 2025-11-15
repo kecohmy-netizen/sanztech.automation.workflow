@@ -1,0 +1,5 @@
+[33mf32d67c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Add preview page for legal pages UI
+[33mad7b484[m Add Terms of Service and TikTok app submission guide
+[33m5db90ac[m Add Privacy Policy page for TikTok API compliance
+[33mde93504[m[33m ([m[1;31morigin/main[m[33m)[m Fix profile image: Use local image instead of external URL
+[33mf479f0a[m Fix Netlify configuration for Next.js 15 App Router
