@@ -52,11 +52,17 @@ export default function TikTokAutomation() {
     }
   ]);
 
-  const [newLink, setNewLink] = useState({
+  const [newLink, setNewLink] = useState<{
+    title: string;
+    url: string;
+    description: string;
+    schedule: 'instant' | 'daily' | 'weekly' | 'custom';
+    customTime: string;
+  }>({
     title: '',
     url: '',
     description: '',
-    schedule: 'daily' as const,
+    schedule: 'daily',
     customTime: ''
   });
 

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { UserMenu } from "./UserMenu";
 import { 
   LayoutDashboard, 
   Bot, 
@@ -55,6 +57,7 @@ const bottomNavItems = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("Dashboard");
 
@@ -142,13 +145,13 @@ export default function Dashboard() {
             <h2 className="text-xl md:text-3xl font-bold text-white">Dashboard</h2>
             <p className="text-gray-400 mt-1 text-xs md:text-base">Welcome back to your automation control center</p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#d4af37]/10 hover:bg-[#d4af37]/20 border border-[#d4af37]/30"
-          >
-            <User className="w-5 h-5 md:w-6 md:h-6 text-[#d4af37]" />
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:block text-right">
+              <p className="text-sm font-semibold text-white">{user?.name || 'User'}</p>
+              <p className="text-xs text-gray-400">{user?.email}</p>
+            </div>
+            <UserMenu />
+          </div>
         </header>
 
         {/* Content */}

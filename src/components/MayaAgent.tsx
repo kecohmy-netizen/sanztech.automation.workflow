@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { useMaya } from '@/hooks/useMaya';
 import { 
   Bot, 
   Send, 
@@ -18,7 +19,8 @@ import {
   DollarSign,
   Megaphone,
   Users,
-  Rocket
+  Rocket,
+  Trash2
 } from 'lucide-react';
 
 interface Message {
@@ -26,47 +28,76 @@ interface Message {
   content: string;
   timestamp: Date;
   type?: 'success' | 'error' | 'info';
+  suggestions?: string[];
 }
 
 export default function MayaAgent() {
   const navigate = useNavigate();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [input, setInput] = useState('');
+  
+  // Use Maya AI hook
+  const { 
+    messages: mayaMessages, 
+    isLoading, 
+    error, 
+    sendMessage,
+    clearConversation 
+  } = useMaya({ userId: 'user-1', autoLoad: true });
+
+  // Convert Maya messages to display format
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'maya',
-      content: 'Halo! Saya Maya, AI Agent untuk MayaHQ. Saya dapat membantu Anda:\n\n• Membuat workflow automation baru\n• Memperbaiki error dalam automation\n• Mengoptimalkan performa aplikasi\n• Memberikan saran untuk meningkatkan sistem\n\nApa yang bisa saya bantu hari ini?',
+      content: 'Halo! Saya Maya, AI Agent untuk automation platform. Saya dapat membantu:\n\n• Membuat workflow automation\n• Generate AI content untuk TikTok\n• Analyze performance & analytics\n• Optimize sistem automation\n• Suggest workflow improvements\n\nApa yang bisa saya bantu hari ini? 🚀',
       timestamp: new Date(),
       type: 'info'
     }
   ]);
-  const [input, setInput] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Update messages when Maya responds
+  useEffect(() => {
+    if (mayaMessages.length > 0) {
+      const formattedMessages = mayaMessages.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'maya',
+        content: msg.content,
+        timestamp: msg.timestamp,
+        type: 'info' as const,
+        suggestions: msg.suggestions,
+      }));
+      setMessages(prev => {
+        // Keep welcome message and add new messages
+        return [prev[0], ...formattedMessages];
+      });
+    }
+  }, [mayaMessages]);
+
+  // Auto scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = {
-      role: 'user',
-      content: input,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+    const message = input;
     setInput('');
-    setIsProcessing(true);
-
-    setTimeout(() => {
-      const response = generateMayaResponse(input);
-      const mayaMessage: Message = {
-        role: 'maya',
-        content: response.content,
-        timestamp: new Date(),
-        type: response.type
-      };
-      setMessages(prev => [...prev, mayaMessage]);
-      setIsProcessing(false);
-    }, 1500);
+    
+    // Send to Maya AI
+    await sendMessage(message);
   };
 
+  const handleClearChat = () => {
+    clearConversation();
+    setMessages([{
+      role: 'maya',
+      content: 'Chat cleared! Apa yang boleh saya bantu sekarang? 😊',
+      timestamp: new Date(),
+      type: 'info'
+    }]);
+  };
+
+  // Keep legacy response generator as fallback
   const generateMayaResponse = (userInput: string): { content: string; type: 'success' | 'error' | 'info' } => {
     const input = userInput.toLowerCase();
 
@@ -162,10 +193,6 @@ export default function MayaAgent() {
     };
   };
 
-  // State untuk mengelola sub-agents
-  const [activeAgents, setActiveAgents] = useState<string[]>([]);
-  const [agentPerformance, setAgentPerformance] = useState<Record<string, number>>({});
-
   const quickActions = [
     { label: 'Maya HQ Setup', icon: <Bot className="w-4 h-4" />, action: 'message' },
     { label: '📱 Phone Setup', icon: <Bot className="w-4 h-4" />, action: 'navigate', path: '/maya/phone' },
@@ -190,11 +217,21 @@ export default function MayaAgent() {
           </div>
           <div className="flex-1">
             <h2 className="text-xl md:text-2xl font-bold text-[#d4af37]">Maya AI Agent</h2>
-            <p className="text-gray-400 text-xs md:text-sm">Autonomous Automation Assistant powered by Gemini</p>
+            <p className="text-gray-400 text-xs md:text-sm">Powered by OpenAI & Gemini AI</p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#d4af37]/20 border border-[#d4af37]/50">
-            <div className="w-2 h-2 rounded-full bg-[#d4af37] animate-pulse" />
-            <span className="text-[#d4af37] text-xs font-semibold">Online</span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearChat}
+              className="text-gray-400 hover:text-[#d4af37]"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#d4af37]/20 border border-[#d4af37]/50">
+              <div className="w-2 h-2 rounded-full bg-[#d4af37] animate-pulse" />
+              <span className="text-[#d4af37] text-xs font-semibold">Online</span>
+            </div>
           </div>
         </div>
       </div>
@@ -259,13 +296,28 @@ export default function MayaAgent() {
               <div className={`whitespace-pre-wrap text-sm md:text-base ${message.role === 'user' ? 'text-black' : 'text-white'}`}>
                 {message.content}
               </div>
+              {message.suggestions && message.suggestions.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {message.suggestions.map((suggestion, idx) => (
+                    <Button
+                      key={idx}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setInput(suggestion)}
+                      className="text-xs border-[#d4af37]/30 hover:border-[#d4af37] hover:bg-[#d4af37]/10"
+                    >
+                      {suggestion}
+                    </Button>
+                  ))}
+                </div>
+              )}
               <div className={`text-xs mt-2 ${message.role === 'user' ? 'text-black/60' : 'text-gray-500'}`}>
                 {message.timestamp.toLocaleTimeString()}
               </div>
             </Card>
           </div>
         ))}
-        {isProcessing && (
+        {isLoading && (
           <div className="flex gap-2 md:gap-3">
             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-[#d4af37] to-[#b8941f] flex items-center justify-center">
               <Bot className="w-4 h-4 md:w-5 md:h-5 text-black" />
@@ -273,11 +325,22 @@ export default function MayaAgent() {
             <Card className="p-3 md:p-4 bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] border-[#d4af37]/20">
               <div className="flex items-center gap-2 text-gray-400 text-sm">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Maya sedang berpikir...</span>
+                <span>Maya is thinking...</span>
               </div>
             </Card>
           </div>
         )}
+        {error && (
+          <div className="flex gap-2 md:gap-3">
+            <Card className="p-3 md:p-4 bg-red-900/20 border-red-500/30 max-w-2xl">
+              <div className="flex items-center gap-2 text-red-400 text-sm">
+                <AlertCircle className="w-4 h-4" />
+                <span>{error}</span>
+              </div>
+            </Card>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
@@ -298,10 +361,14 @@ export default function MayaAgent() {
           />
           <Button
             onClick={handleSend}
-            disabled={!input.trim() || isProcessing}
+            disabled={!input.trim() || isLoading}
             className="bg-[#d4af37] hover:bg-[#b8941f] text-black font-semibold h-auto px-3 md:px-4"
           >
-            <Send className="w-4 h-4 md:w-5 md:h-5" />
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 md:w-5 md:h-5" />
+            )}
           </Button>
         </div>
       </div>

@@ -14,6 +14,7 @@ export interface AnalyticsEvent {
     location?: string;
     referrer?: string;
     userAgent?: string;
+    revenue?: string;
   };
 }
 

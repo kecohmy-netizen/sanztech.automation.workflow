@@ -2,14 +2,26 @@ require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const { OpenRouter } = require('@openrouter/sdk');
+const OpenAI = require('openai');
+const geminiOptimizer = require('./gemini-optimizer');
 
 // Configuration
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const PORT = process.env.PORT || 3000;
 
-// Initialize OpenRouter
+// Initialize OpenAI (PRIORITY!)
+let openai = null;
+if (OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: OPENAI_API_KEY,
+  });
+  console.log('✅ OpenAI initialized (GPT-4 ready!)');
+}
+
+// Initialize OpenRouter (backup)
 let openRouter = null;
 if (OPENROUTER_API_KEY) {
   openRouter = new OpenRouter({
@@ -24,8 +36,22 @@ if (OPENROUTER_API_KEY) {
 // Conversation history per user
 const conversationHistory = new Map();
 
-// Initialize bot
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+// Initialize bot with better polling config
+const bot = new TelegramBot(BOT_TOKEN, { 
+  polling: {
+    interval: 2000, // Poll every 2 seconds (less aggressive)
+    autoStart: true,
+    params: {
+      timeout: 10 // Long polling timeout
+    }
+  },
+  request: {
+    agentOptions: {
+      keepAlive: true,
+      keepAliveMsecs: 10000
+    }
+  }
+});
 
 // Initialize express for health check
 const app = express();
@@ -72,32 +98,173 @@ Link bio performance:
 
 Respond naturally like a human friend who's tech-savvy and helpful. Don't be too formal or robotic.`;
 
-// Get AI response (Gemini -> OpenRouter -> Smart fallback)
+// OpenAI Integration (GPT-4 - BEST AI!)
+async function getOpenAIResponse(userId, message) {
+  if (!openai) {
+    throw new Error('OpenAI not initialized');
+  }
+  
+  // Get or create conversation history
+  if (!conversationHistory.has(userId)) {
+    conversationHistory.set(userId, [
+      { role: 'system', content: MAYA_CONTEXT }
+    ]);
+  }
+  
+  const history = conversationHistory.get(userId);
+  
+  // Add user message
+  history.push({ role: 'user', content: message });
+  
+  // Keep only last 10 messages for context
+  if (history.length > 11) {
+    history.splice(1, history.length - 11);
+  }
+  
+  // Call OpenAI API (GPT-3.5-turbo for cost efficiency)
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-3.5-turbo', // Fast & cheap! Use 'gpt-4' for better quality
+    messages: history,
+    max_tokens: 500,
+    temperature: 0.8,
+    top_p: 0.9,
+  });
+  
+  const aiMessage = completion.choices[0].message.content;
+  
+  // Add AI response to history
+  history.push({ role: 'assistant', content: aiMessage });
+  
+  console.log(`✅ OpenAI response: ${aiMessage.substring(0, 50)}...`);
+  
+  return aiMessage;
+}
+
+// Get AI response with REAL AI REASONING (OpenAI priority!)
 async function getAIResponse(userId, message) {
-  // Try Gemini first (FREE!)
-  if (GEMINI_API_KEY) {
+  // Check cache first (save money!)
+  const cached = geminiOptimizer.getCachedResponse(message);
+  if (cached) {
+    console.log('💾 Using cached response (saving API cost)');
+    return cached;
+  }
+  
+  // Try OpenAI FIRST (BEST AI with reasoning!)
+  if (OPENAI_API_KEY) {
     try {
-      return await getGeminiResponse(userId, message);
+      console.log('🤖 Using OpenAI GPT (real AI reasoning)...');
+      const response = await getOpenAIResponse(userId, message);
+      geminiOptimizer.cacheResponse(message, response);
+      return response;
     } catch (error) {
-      console.error('Gemini error:', error.message);
+      console.error('OpenAI error:', error.message);
+      // Continue to next option
     }
   }
   
-  // Try OpenRouter if available
+  // Try OpenRouter as backup
   if (OPENROUTER_API_KEY) {
     try {
-      return await getOpenRouterResponse(userId, message);
+      console.log('🤖 Using OpenRouter AI...');
+      const response = await getOpenRouterResponse(userId, message);
+      geminiOptimizer.cacheResponse(message, response);
+      return response;
     } catch (error) {
       console.error('OpenRouter error:', error.message);
     }
   }
   
-  // Smart fallback responses (human-like)
-  return getSmartResponse(message);
+  // Try Gemini as backup
+  if (GEMINI_API_KEY) {
+    const canUse = geminiOptimizer.canMakeRequest(userId);
+    
+    if (canUse.allowed) {
+      try {
+        console.log('🤖 Using Gemini AI...');
+        const response = await getGeminiResponse(userId, message);
+        geminiOptimizer.recordRequest(userId, 500);
+        geminiOptimizer.cacheResponse(message, response);
+        return response;
+      } catch (error) {
+        console.error('Gemini error:', error.message);
+      }
+    }
+  }
+  
+  // Smart fallback as last resort
+  console.log('💡 Using smart fallback');
+  return geminiOptimizer.getSmartFallback(message);
 }
+
+// Smart rate limiting for Gemini API (FREE tier optimization)
+const geminiRateLimit = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS_PER_MINUTE = 15; // Gemini free tier: 15 RPM
+const DAILY_LIMIT = 1500; // Gemini free tier: 1500 RPD
+const dailyUsage = new Map(); // Track daily usage per user
+
+function checkGeminiRateLimit(userId) {
+  const now = Date.now();
+  const today = new Date().toDateString();
+  
+  // Check per-minute rate limit (15 RPM)
+  const userRequests = geminiRateLimit.get(userId) || [];
+  const recentRequests = userRequests.filter(time => now - time < RATE_LIMIT_WINDOW);
+  
+  if (recentRequests.length >= MAX_REQUESTS_PER_MINUTE) {
+    console.log(`⚠️ User ${userId} hit per-minute limit (${MAX_REQUESTS_PER_MINUTE} RPM)`);
+    return false;
+  }
+  
+  // Check daily limit (1500 RPD)
+  const userDailyData = dailyUsage.get(userId) || { date: today, count: 0 };
+  
+  // Reset if new day
+  if (userDailyData.date !== today) {
+    userDailyData.date = today;
+    userDailyData.count = 0;
+  }
+  
+  if (userDailyData.count >= DAILY_LIMIT) {
+    console.log(`⚠️ User ${userId} hit daily limit (${DAILY_LIMIT} RPD)`);
+    return false;
+  }
+  
+  // Update counters
+  recentRequests.push(now);
+  geminiRateLimit.set(userId, recentRequests);
+  
+  userDailyData.count++;
+  dailyUsage.set(userId, userDailyData);
+  
+  console.log(`✅ Gemini quota: ${userDailyData.count}/${DAILY_LIMIT} today, ${recentRequests.length}/${MAX_REQUESTS_PER_MINUTE} this minute`);
+  
+  return true;
+}
+
+// Reset daily counters at midnight
+setInterval(() => {
+  const today = new Date().toDateString();
+  for (const [userId, data] of dailyUsage.entries()) {
+    if (data.date !== today) {
+      dailyUsage.delete(userId);
+    }
+  }
+}, 3600000); // Check every hour
 
 // Google Gemini Integration (FREE!)
 async function getGeminiResponse(userId, message) {
+  // Check if API key is configured
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_gemini_api_key') {
+    console.log('⚠️ Gemini API key not configured. Using smart fallback.');
+    throw new Error('Gemini API key not configured');
+  }
+  
+  // Check rate limit first
+  if (!checkGeminiRateLimit(userId)) {
+    throw new Error('Rate limit exceeded. Please wait a moment.');
+  }
+  
   const fetch = (await import('node-fetch')).default;
   
   // Get or create conversation history
@@ -118,9 +285,9 @@ async function getGeminiResponse(userId, message) {
   
   conversationText += `User: ${message}\nMaya:`;
   
-  // Call Gemini API (using v1beta for latest models)
+  // Call Gemini API (using v1beta with Gemini 2.0 Flash Exp - FREE!)
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: 'POST',
       headers: {
@@ -162,7 +329,7 @@ async function getGeminiResponse(userId, message) {
   return aiMessage;
 }
 
-// OpenRouter Integration (for GPT-4, Claude, etc)
+// OpenRouter Integration (REAL AI with reasoning!)
 async function getOpenRouterResponse(userId, message) {
   if (!openRouter) {
     throw new Error('OpenRouter not initialized');
@@ -180,17 +347,18 @@ async function getOpenRouterResponse(userId, message) {
   // Add user message
   history.push({ role: 'user', content: message });
   
-  // Keep only last 10 messages
+  // Keep only last 10 messages for context
   if (history.length > 11) {
     history.splice(1, history.length - 11);
   }
   
-  // Call OpenRouter API using SDK
+  // Call OpenRouter API with FREE model that has reasoning
   const completion = await openRouter.chat.send({
-    model: 'google/gemini-flash-1.5', // Free tier model
+    model: 'meta-llama/llama-3.2-3b-instruct:free', // FREE model with good reasoning!
     messages: history,
-    max_tokens: 400,
+    max_tokens: 500,
     temperature: 0.8,
+    top_p: 0.9,
     stream: false
   });
   
@@ -198,6 +366,8 @@ async function getOpenRouterResponse(userId, message) {
   
   // Add AI response to history
   history.push({ role: 'assistant', content: aiMessage });
+  
+  console.log(`✅ OpenRouter response: ${aiMessage.substring(0, 50)}...`);
   
   return aiMessage;
 }
@@ -645,7 +815,7 @@ bot.on('voice', async (msg) => {
     if (GEMINI_API_KEY) {
       try {
         const geminiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+          `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -751,9 +921,28 @@ bot.on('callback_query', (query) => {
   }
 });
 
-// Handle errors
+// Handle errors with auto-recovery
 bot.on('polling_error', (error) => {
   console.error('❌ Polling error:', error.code, error.message);
+  
+  // Don't crash on network errors - they're temporary
+  if (error.code === 'EFATAL' || error.code === 'ECONNRESET') {
+    console.log('🔄 Network hiccup detected. Bot will auto-reconnect...');
+    // The bot will automatically retry polling
+  }
+});
+
+// Connection monitoring
+let lastPollTime = Date.now();
+setInterval(() => {
+  const now = Date.now();
+  if (now - lastPollTime > 30000) {
+    console.log('⚠️ No polling activity for 30s. Connection might be stale.');
+  }
+}, 30000);
+
+bot.on('message', (msg) => {
+  lastPollTime = Date.now();
 });
 
 // ============================================

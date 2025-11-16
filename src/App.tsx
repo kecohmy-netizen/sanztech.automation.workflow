@@ -2,6 +2,9 @@ import { Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import AffiliateHub from "./pages/AffiliateHub";
+import TemplateShowcase from "./pages/TemplateShowcase";
+import WorkflowLanding from "./pages/WorkflowLanding";
+import SanzTechLanding from "./pages/SanzTechLanding";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -15,15 +18,26 @@ import LinkBioAutomation from "./pages/LinkBioAutomation";
 import MayaPhoneSetup from "./pages/MayaPhoneSetup";
 import TikTokUpload from "./pages/TikTokUpload";
 import TikTokCallback from "./pages/TikTokCallback";
+import { Onboarding } from "./components/Onboarding";
+import { InstallPWA } from "./components/InstallPWA";
+import { ScrollToTop } from "./components/ScrollToTop";
+import { Sidebar } from "./components/Sidebar";
 
 function App() {
   return (
     <Suspense fallback={<p>Loading...</p>}>
       <>
+        <Sidebar />
+        <ScrollToTop />
+        <Onboarding />
+        <InstallPWA />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/baju-budak" element={<AffiliateHub />} />
+          <Route path="/showcase" element={<TemplateShowcase />} />
+          <Route path="/workflow" element={<SanzTechLanding />} />
+          <Route path="/portfolio" element={<SanzTechLanding />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           
