@@ -105,22 +105,6 @@ export default function LandingPage() {
                 className="w-full h-full object-cover"
               />
             </motion.div>
-            <motion.div 
-              className="absolute -bottom-2 -right-2 w-10 h-10 bg-[#d4af37] rounded-full flex items-center justify-center cursor-pointer"
-              animate={{
-                rotate: [0, 360],
-                scale: [1, 1.2, 1]
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            >
-              <span className="text-2xl">✨</span>
-            </motion.div>
-
-
           </motion.div>
           
           <motion.div 
