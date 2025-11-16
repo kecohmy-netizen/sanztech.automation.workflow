@@ -1,18 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Rocket, Video, Upload, Check, X, Sparkles, Mail, Phone } from 'lucide-react';
+import { Video, Sparkles, Mail, Phone } from 'lucide-react';
 import { useSound } from '../hooks/use-sound';
 
-const STORAGE_KEY = "profile_image";
-
 export default function LandingPage() {
-  const [displayImage, setDisplayImage] = useState<string>("/placeholder-user.jpg");
-  const [newProfileImage, setNewProfileImage] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { playClick, playHover, playSuccess, playError } = useSound();
+  const { playClick, playHover } = useSound();
 
   const affiliateLinks = [
     {
@@ -23,68 +17,20 @@ export default function LandingPage() {
     },
     {
       id: 2,
-      title: "🚀 Template Automation",
-      url: "https://www.sanztech.online",
-      internal: false
+      title: "⚙️ Sanztech Workflow",
+      url: "/workflow",
+      internal: true
+    },
+    {
+      id: 3,
+      title: "⚙️ Template Automation",
+      url: "/showcase",
+      internal: true
     },
   ];
 
-  useEffect(() => {
-    const savedImage = localStorage.getItem(STORAGE_KEY);
-    if (savedImage) {
-      setDisplayImage(savedImage);
-    }
-  }, []);
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        playError();
-        alert("File too large. Please upload an image smaller than 5MB.");
-        return;
-      }
-      playClick();
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewProfileImage(reader.result as string);
-      };
-      reader.onerror = () => {
-        playError();
-        alert("Could not read the file.");
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const triggerFileUpload = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleSaveImage = async () => {
-    if (!newProfileImage) return;
-
-    setIsSaving(true);
-    try {
-      localStorage.setItem(STORAGE_KEY, newProfileImage);
-      setDisplayImage(newProfileImage);
-      setNewProfileImage(null);
-      playSuccess();
-    } catch (error) {
-      playError();
-      alert("Could not save your image. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setNewProfileImage(null);
-  };
-
   return (
-    <div className="relative min-h-screen w-full bg-[#0a0e1a] text-white overflow-x-hidden">
+    <div className="relative min-h-screen w-full bg-[#0a0e1a] text-white overflow-x-hidden pt-20">
       {/* Animated Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(20)].map((_, i) => (
@@ -154,13 +100,9 @@ export default function LandingPage() {
               transition={{ duration: 2, repeat: Infinity }}
             >
               <img
-                src={newProfileImage || displayImage}
+                src="/adam-profile.jpg"
                 alt="Adam Sanz, Mind Hustler of KL"
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/placeholder-user.jpg";
-                }}
               />
             </motion.div>
             <motion.div 
@@ -178,59 +120,7 @@ export default function LandingPage() {
               <span className="text-2xl">✨</span>
             </motion.div>
 
-            <div className="absolute bottom-0 right-0 flex items-center gap-1">
-              <motion.button
-                className="rounded-full h-8 w-8 bg-[#d4af37] hover:bg-yellow-500 text-black shadow-md flex items-center justify-center"
-                onClick={() => {
-                  playClick();
-                  triggerFileUpload();
-                }}
-                onMouseEnter={playHover}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                title="Upload new profile picture"
-              >
-                <Upload className="h-4 w-4" />
-              </motion.button>
-              {newProfileImage && (
-                <>
-                  <motion.button
-                    className="rounded-full h-8 w-8 bg-[#d4af37] hover:bg-yellow-500 text-black shadow-md flex items-center justify-center"
-                    onClick={() => {
-                      playClick();
-                      handleSaveImage();
-                    }}
-                    disabled={isSaving}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    title="Save picture"
-                  >
-                    <Check className="h-4 w-4" />
-                  </motion.button>
-                  <motion.button
-                    className="rounded-full h-8 w-8 bg-gray-700 hover:bg-gray-600 text-white shadow-md flex items-center justify-center"
-                    onClick={() => {
-                      playClick();
-                      handleCancel();
-                    }}
-                    disabled={isSaving}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    title="Cancel"
-                  >
-                    <X className="h-4 w-4" />
-                  </motion.button>
-                </>
-              )}
-            </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              className="hidden"
-              accept="image/*"
-              aria-label="Upload profile image"
-            />
+
           </motion.div>
           
           <motion.div 
