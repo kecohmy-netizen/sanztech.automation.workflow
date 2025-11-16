@@ -3,5 +3,15 @@
   "outputDirectory": "dist",
   "redirects": [
     { "source": "/", "destination": "/tiktok-bio-link", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/tiktok-bio-link", "destination": "/index.html" },
+    { "source": "/tiktok-bio-link/(.*)", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "routes": [
+    { "src": "/tiktok-bio-link", "dest": "/index.html" },
+    { "src": "/tiktok-bio-link/(.*)", "dest": "/index.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
