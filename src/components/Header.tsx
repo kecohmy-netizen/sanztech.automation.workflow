@@ -29,13 +29,13 @@ export function Header() {
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             <Link 
-              to="/" 
+              to="/tiktok-bio-link" 
               className="text-gray-300 hover:text-[#d4af37] transition-colors text-sm"
             >
               Home
             </Link>
             <Link 
-              to="/baju-budak" 
+              to="/tiktok-bio-link/baju-budak" 
               className="text-gray-300 hover:text-[#d4af37] transition-colors text-sm"
             >
               Affiliate

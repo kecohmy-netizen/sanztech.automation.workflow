@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
-import LandingPage from "./pages/LandingPage";
+import LandingPage from "./pages/Tiktok-Bio-Link";
 import AffiliateHub from "./pages/AffiliateHub";
 import TemplateShowcase from "./pages/TemplateShowcase";
 import WorkflowLanding from "./pages/WorkflowLanding";
@@ -25,7 +25,7 @@ import { Sidebar } from "./components/Sidebar";
 
 function App() {
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+  <Suspense fallback={<p>Loading...</p>}>
       <>
         <Sidebar />
         <ScrollToTop />
@@ -33,7 +33,11 @@ function App() {
         <InstallPWA />
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/tiktok-bio-link" element={<LandingPage />} />
+          <Route path="/tiktok-bio-link/baju-budak" element={<AffiliateHub />} />
+          <Route path="/tiktok-bio-link/showcase" element={<TemplateShowcase />} />
+          <Route path="/tiktok-bio-link/workflow" element={<SanzTechLanding />} />
           <Route path="/baju-budak" element={<AffiliateHub />} />
           <Route path="/showcase" element={<TemplateShowcase />} />
           <Route path="/workflow" element={<SanzTechLanding />} />
@@ -54,7 +58,7 @@ function App() {
           <Route path="/linkbio" element={<ProtectedRoute><LinkBioAutomation /></ProtectedRoute>} />
           
           {/* Catch all - redirect to homepage */}
-          <Route path="*" element={<LandingPage />} />
+          <Route path="*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         </Routes>
       </>
     </Suspense>

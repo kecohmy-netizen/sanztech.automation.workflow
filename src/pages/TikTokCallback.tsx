@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { tiktokService } from '@/services/tiktokService';
+import { useAuth } from '@/hooks/useAuth';
+import { supabaseHelpers } from '@/services/supabaseClient';
 
 export default function TikTokCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Processing authentication...');
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -32,8 +35,13 @@ export default function TikTokCallback() {
         // Exchange code for access token
         const accessToken = await tiktokService.getAccessToken(code);
         
-        // Store token in localStorage
-        localStorage.setItem('tiktok_access_token', accessToken);
+        sessionStorage.setItem('tiktok_access_token', accessToken);
+        tiktokService.setAccessToken(accessToken);
+        if (user?.id) {
+          try {
+            await supabaseHelpers.updateUserSettings(user.id, { tiktok_access_token: accessToken });
+          } catch {}
+        }
         
         setStatus('success');
         setMessage('Successfully connected to TikTok!');

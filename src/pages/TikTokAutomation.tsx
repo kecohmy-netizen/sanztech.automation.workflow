@@ -13,6 +13,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import { bridgeService } from '@/services/bridgeService';
 
 interface AffiliateLink {
   id: string;
@@ -68,6 +69,7 @@ export default function TikTokAutomation() {
 
   const [isAdding, setIsAdding] = useState(false);
   const [automationStatus, setAutomationStatus] = useState<'running' | 'stopped'>('stopped');
+  const [statusCounts, setStatusCounts] = useState({ pending: 0, running: 0, completed: 0, failed: 0 });
 
   const addLink = () => {
     if (!newLink.title || !newLink.url) return;
@@ -100,9 +102,51 @@ export default function TikTokAutomation() {
     setLinks(links.filter(link => link.id !== id));
   };
 
-  const toggleAutomation = () => {
-    setAutomationStatus(automationStatus === 'running' ? 'stopped' : 'running');
+  const toggleAutomation = async () => {
+    const next = automationStatus === 'running' ? 'stopped' : 'running';
+    setAutomationStatus(next);
+    if (next === 'running') {
+      for (const link of links.filter(l => l.status === 'active')) {
+        const hashtags = ['#automation'];
+        try {
+          await bridgeService.scheduleTask({
+            title: link.title,
+            url: link.url,
+            schedule: link.schedule === 'daily' ? '0 9 * * *' : link.schedule === 'weekly' ? '0 9 * * 1' : undefined,
+            enabled: true,
+            hashtags,
+            description: link.description,
+          });
+        } catch {}
+      }
+    } else {
+      try {
+        await bridgeService.scheduleTask({ title: 'tiktok_autopost', enabled: false });
+      } catch {}
+    }
   };
+
+  React.useEffect(() => {
+    let interval: any;
+    const fetchStatus = async () => {
+      try {
+        const s = await bridgeService.getAutomationStatus();
+        setStatusCounts({
+          pending: s.pending || 0,
+          running: s.running || 0,
+          completed: s.completed || 0,
+          failed: s.failed || 0,
+        });
+      } catch {}
+    };
+    fetchStatus();
+    if (automationStatus === 'running') {
+      interval = setInterval(fetchStatus, 5000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [automationStatus]);
 
   const totalPerformance = links.reduce((acc, link) => ({
     views: acc.views + link.performance.views,
@@ -372,6 +416,24 @@ export default function TikTokAutomation() {
                   : 'System paused - klik Start Automation untuk memulai'
                 }
               </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+            <div className="text-center p-3 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20">
+              <p className="text-xl font-bold text-[#d4af37]">{statusCounts.pending}</p>
+              <p className="text-xs text-gray-400">Pending</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20">
+              <p className="text-xl font-bold text-[#d4af37]">{statusCounts.running}</p>
+              <p className="text-xs text-gray-400">Running</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20">
+              <p className="text-xl font-bold text-[#d4af37]">{statusCounts.completed}</p>
+              <p className="text-xs text-gray-400">Completed</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20">
+              <p className="text-xl font-bold text-[#d4af37]">{statusCounts.failed}</p>
+              <p className="text-xs text-gray-400">Failed</p>
             </div>
           </div>
         </div>

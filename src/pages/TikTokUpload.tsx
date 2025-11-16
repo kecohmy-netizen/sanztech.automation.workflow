@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { tiktokService } from '@/services/tiktokService';
+import { bridgeService } from '@/services/bridgeService';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function TikTokUpload() {
@@ -23,6 +23,7 @@ export default function TikTokUpload() {
   const [publishId, setPublishId] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [checking, setChecking] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,8 +67,7 @@ export default function TikTokUpload() {
     setUploadStatus('idle');
 
     try {
-      const id = await tiktokService.publishVideo({
-        videoFile,
+      const init = await bridgeService.initUpload({
         title,
         description,
         privacyLevel: privacyLevel as any,
@@ -75,22 +75,39 @@ export default function TikTokUpload() {
         disableDuet,
         disableStitch,
       });
-
+      const upload = await bridgeService.uploadVideo(videoFile, init.publish_id);
+      const id = upload.publish_id || init.publish_id;
       setPublishId(id);
       setUploadStatus('success');
-      
-      toast({
-        title: 'Upload successful!',
-        description: 'Your video is being processed by TikTok',
-      });
-
-      // Reset form
+      toast({ title: 'Upload successful!', description: 'Video is processing' });
       setVideoFile(null);
       setTitle('');
       setDescription('');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setChecking(true);
+      let attempts = 0;
+      const interval = setInterval(async () => {
+        attempts += 1;
+        try {
+          const status = await bridgeService.getPublishStatus(id);
+          const s = status?.data?.status || status?.status;
+          if (s === 'SUCCESS' || s === 'COMPLETED') {
+            clearInterval(interval);
+            setChecking(false);
+            toast({ title: 'Published', description: 'TikTok has published your video' });
+          }
+          if (s === 'FAILED' || s === 'ERROR') {
+            clearInterval(interval);
+            setChecking(false);
+            setUploadStatus('error');
+            toast({ title: 'Publish failed', description: 'TikTok failed to publish', variant: 'destructive' });
+          }
+        } catch {}
+        if (attempts >= 12) {
+          clearInterval(interval);
+          setChecking(false);
+        }
+      }, 5000);
     } catch (error: any) {
       console.error('Upload error:', error);
       setUploadStatus('error');
@@ -105,9 +122,13 @@ export default function TikTokUpload() {
     }
   };
 
-  const handleAuth = () => {
-    const authUrl = tiktokService.getAuthUrl();
-    window.location.href = authUrl;
+  const handleAuth = async () => {
+    try {
+      const url = await bridgeService.getAuthUrl();
+      window.location.href = url;
+    } catch {
+      toast({ title: 'Auth error', description: 'Unable to start TikTok auth', variant: 'destructive' });
+    }
   };
 
   return (
@@ -271,6 +292,12 @@ export default function TikTokUpload() {
               <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                 <AlertCircle className="h-5 w-5 text-red-400" />
                 <p className="text-red-400 font-semibold">Upload Failed. Please try again.</p>
+              </div>
+            )}
+            {checking && (
+              <div className="flex items-center gap-2 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                <Loader2 className="h-4 w-4 animate-spin text-yellow-400" />
+                <p className="text-yellow-400 font-semibold">Checking publish status...</p>
               </div>
             )}
           </CardContent>

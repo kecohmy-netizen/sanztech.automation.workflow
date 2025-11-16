@@ -1,12 +1,15 @@
 import path from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import dns from "node:dns";
+
+dns.setDefaultResultOrder?.("verbatim");
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: process.env.NODE_ENV === "development" ? "/" : process.env.VITE_BASE_PATH || "/",
   optimizeDeps: {
-    entries: ["src/main.tsx", "src/tempobook/**/*"],
+    entries: ["src/main.tsx"],
   },
   plugins: [
     react(),
@@ -18,7 +21,9 @@ export default defineConfig({
     },
   },
   server: {
-    // @ts-ignore
-    allowedHosts: true,
+    host: "localhost",
+    port: 5173,
+    strictPort: true,
+    allowedHosts: ["localhost", "127.0.0.1"],
   }
 });

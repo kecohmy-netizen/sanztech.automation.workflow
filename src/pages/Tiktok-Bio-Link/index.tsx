@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Video, Sparkles, Mail, Phone } from 'lucide-react';
-import { useSound } from '../hooks/use-sound';
+import { useSound } from '@/hooks/use-sound';
 
 export default function LandingPage() {
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -12,26 +12,25 @@ export default function LandingPage() {
     {
       id: 1,
       title: "🔥 Collection Baju Budak",
-      url: "/baju-budak",
+      url: "/tiktok-bio-link/baju-budak",
       internal: true
     },
     {
       id: 2,
       title: "⚙️ Sanztech Workflow",
-      url: "/workflow",
+      url: "/tiktok-bio-link/workflow",
       internal: true
     },
     {
       id: 3,
       title: "⚙️ Template Automation",
-      url: "/showcase",
+      url: "/tiktok-bio-link/showcase",
       internal: true
     },
   ];
 
   return (
     <div className="relative min-h-screen w-full bg-[#0a0e1a] text-white overflow-x-hidden pt-20">
-      {/* Animated Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(20)].map((_, i) => (
           <motion.div
@@ -53,9 +52,7 @@ export default function LandingPage() {
           />
         ))}
       </div>
-      
       <main className="container mx-auto max-w-2xl px-4 py-8 sm:py-12 md:py-20 flex flex-col items-center gap-6 sm:gap-8 md:gap-10 relative z-10">
-        {/* Sound Toggle */}
         <motion.button
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -69,8 +66,6 @@ export default function LandingPage() {
             {soundEnabled ? '🔊' : '🔇'}
           </span>
         </motion.button>
-
-        {/* Profile Section */}
         <motion.section 
           className="flex flex-col items-center text-center gap-4 sm:gap-6 w-full"
           initial={{ opacity: 0, y: 20 }}
@@ -106,7 +101,6 @@ export default function LandingPage() {
               />
             </motion.div>
           </motion.div>
-          
           <motion.div 
             className="flex flex-col gap-2"
             initial={{ opacity: 0, y: 20 }}
@@ -130,7 +124,6 @@ export default function LandingPage() {
               Mind Hustler of KL
             </motion.p>
           </motion.div>
-          
           <motion.p 
             className="max-w-md text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed px-4"
             initial={{ opacity: 0 }}
@@ -140,8 +133,6 @@ export default function LandingPage() {
             Budak KL main otak & AI, bantu orang hidup dari content, bukan sekadar survive.
           </motion.p>
         </motion.section>
-
-        {/* Links Section */}
         <motion.section 
           className="w-full max-w-sm flex flex-col gap-3 sm:gap-4"
           initial="hidden"
@@ -155,7 +146,6 @@ export default function LandingPage() {
             }
           }}
         >
-          {/* Affiliate Links */}
           {affiliateLinks.map((link) => (
             link.internal ? (
               <motion.div
@@ -205,9 +195,6 @@ export default function LandingPage() {
               </motion.a>
             )
           ))}
-
-          {/* Main CTA Button - TikTok */}
-
           <motion.a
             href="https://www.tiktok.com/@adamsanzziy"
             target="_blank"
@@ -231,8 +218,6 @@ export default function LandingPage() {
             </div>
           </motion.a>
         </motion.section>
-
-        {/* Contact Section */}
         <motion.section 
           className="w-full max-w-sm mt-8 p-6 bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-[#d4af37]/20"
           initial={{ opacity: 0, y: 50 }}
@@ -266,8 +251,6 @@ export default function LandingPage() {
             </motion.a>
           </div>
         </motion.section>
-
-        {/* Footer */}
         <motion.footer 
           className="text-center text-gray-400 mt-8 pt-6 border-t border-gray-800 text-sm space-y-2"
           initial={{ opacity: 0 }}
