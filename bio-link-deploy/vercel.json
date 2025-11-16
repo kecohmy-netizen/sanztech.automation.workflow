@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npm run build-no-errors",
+  "outputDirectory": "dist",
+  "redirects": [
+    { "source": "/", "destination": "/tiktok-bio-link", "permanent": true }
+  ]
+}
